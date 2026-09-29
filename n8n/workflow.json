@@ -7,13 +7,13 @@
         "path": "clientes",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000001",
+      "id": "10d26362-33f1-4b48-a132-6444ff3227b7",
       "name": "Webhook - Ingest RPA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        220,
-        300
+        -896,
+        -144
       ],
       "webhookId": "clientes-investimento-rpa"
     },
@@ -22,13 +22,13 @@
         "fieldToSplitOut": "body.clientes",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000002",
+      "id": "e7c19fb4-6262-42df-97da-bd53bcd6cc4f",
       "name": "Split Out Clientes",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        440,
-        300
+        -672,
+        -144
       ]
     },
     {
@@ -36,39 +36,39 @@
         "url": "https://digitalinnovationone.github.io/dio-lab-assistente-investimentos-rpa-n8n/data.csv",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000003",
+      "id": "31aa13ea-30ce-4c28-9674-f98bbcd9146f",
       "name": "HTTP - Buscar Investimentos CSV",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        660,
-        180
+        -448,
+        -272
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Extrai e processa a tabela CSV de investimentos\nconst csvData = $input.first().json.data || $input.first().json.body || '';\nconst lines = (typeof csvData === 'string' ? csvData : '').trim().split('\\n');\n\nif (lines.length <= 1) {\n  // Fallback caso a requisição externa falhe\n  return [\n    { json: { perfil: 'Conservador', produto: 'Tesouro Selic', minimo: 500, rentabilidade: '13.0%' } },\n    { json: { perfil: 'Conservador', produto: 'CDB Liquidez Diária', minimo: 1000, rentabilidade: '12.5%' } },\n    { json: { perfil: 'Moderado', produto: 'CDB Prefixado', minimo: 1000, rentabilidade: '14.0%' } },\n    { json: { perfil: 'Moderado', produto: 'Fundo Multimercado', minimo: 5000, rentabilidade: '16.0%' } },\n    { json: { perfil: 'Arrojado', produto: 'Ações ETF', minimo: 500, rentabilidade: 'Variável' } },\n    { json: { perfil: 'Arrojado', produto: 'Fundo de Ações', minimo: 10000, rentabilidade: 'Variável' } }\n  ];\n}\n\nconst headers = lines[0].split(',').map(h => h.trim());\nconst items = [];\n\nfor (let i = 1; i < lines.length; i++) {\n  const row = lines[i].split(',').map(r => r.trim());\n  if (row.length === headers.length) {\n    const obj = {};\n    headers.forEach((header, index) => {\n      let val = row[index];\n      if (header === 'minimo') val = parseFloat(val) || 0;\n      obj[header] = val;\n    });\n    items.push({ json: obj });\n  }\n}\n\nreturn items;"
+        "jsCode": "// Extrai e processa a tabela CSV de investimentos\nconst csvData = $input.first().json.data || $input.first().json.body || '';\nconst lines = (typeof csvData === 'string' ? csvData : '').trim().split('\\n');\n\nif (lines.length <= 1) {\n  // Fallback caso a requisição externa falhe\n  return [\n    { json: { perfil: 'Conservador', produto: 'Tesouro Selic', minimo: 500, rentabilidade: '13.0%' } },\n    { json: { perfil: 'Conservador', produto: 'CDB Liquidez Diária', minimo: 1000, rentabilidade: '12.5%' } },\n    { json: { perfil: 'Moderado', produto: 'CDB Prefixado', minimo: 1000, rentabilidade: '14.0%' } },\n    { json: { perfil: 'Moderado', produto: 'Fundo Multimercado', minimo: 5000, rentabilidade: '16.0%' } },\n    { json: { perfil: 'Arrojado', produto: 'Ações ETF', minimo: 500, rentabilidade: 'Variável' } },\n    { json: { perfil: 'Arrojado', produto: 'Fundo de Ações', minimo: 10000, rentabilidade: 'Variável' } }\n  ];\n}\n\nconst headers = lines[0].split(',').map(h => h.trim());\nconst items = [];\n\nfor (let i = 1; i < lines.length; i++) {\n  const row = lines[i].split(',').map(r => r.trim());\n  if (row.length === headers.length) {\n    const obj = {};\n    headers.forEach((header, index) => {\n      let val = row[index];\n      if (header === 'minimo') val = parseFloat(val) || 0;\n      obj[header] = val;\n    });\n    items.push({ json: obj });\n  }\n}\n\nreturn [\n  {\n    json: {\n      investimentos: items.map(item => item.json)\n    }\n  }\n];"
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000004",
+      "id": "c1e82ae7-dc72-4d7d-8f5f-8c93ff43c761",
       "name": "Code - Parse CSV Investimentos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        180
+        -224,
+        -272
       ]
     },
     {
       "parameters": {
         "jsCode": "// Cruzamento do Perfil do Cliente com os Produtos do CSV\nconst cliente = $('Split Out Clientes').item.json;\nconst investimentos = $('Code - Parse CSV Investimentos').all().map(i => i.json);\n\n// Sanitiza saldo monetário (ex: 'R$ 12.500,00' -> 12500.00)\nlet saldoNumerico = 0;\nif (typeof cliente.saldo === 'number') {\n  saldoNumerico = cliente.saldo;\n} else if (typeof cliente.saldo === 'string') {\n  const limpo = cliente.saldo.replace(/[^0-9,-]/g, '').replace(',', '.');\n  saldoNumerico = parseFloat(limpo) || 0;\n}\n\n// Filtra produtos aderentes ao perfil\nconst perfilCliente = (cliente.perfil || '').trim().toLowerCase();\nconst produtosCompativeis = investimentos.filter(inv => {\n  const perfilInv = (inv.perfil || '').trim().toLowerCase();\n  return perfilInv === perfilCliente;\n});\n\n// Seleciona as melhores recomendações (que cabem no saldo ou prioritárias)\nconst recomendados = produtosCompativeis.filter(p => p.minimo <= saldoNumerico);\nconst produtosFinais = recomendados.length > 0 ? recomendados : produtosCompativeis;\n\nreturn {\n  json: {\n    cliente_nome: cliente.nome,\n    cliente_email: cliente.email,\n    cliente_saldo: cliente.saldo,\n    cliente_saldo_num: saldoNumerico,\n    cliente_perfil: cliente.perfil,\n    produtos_recomendados: produtosFinais,\n    produtos_resumo: produtosFinais.map(p => `${p.produto} (Mín: R$ ${p.minimo} | Retorno: ${p.rentabilidade})`).join('; '),\n    data_analise: new Date().toLocaleDateString('pt-BR')\n  }\n};"
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000005",
+      "id": "f3ae3d57-9ea8-4690-80b2-4bdaf0e1e6b4",
       "name": "Code - Cruzar Perfil e Investimentos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        380
+        -208,
+        -80
       ]
     },
     {
@@ -79,32 +79,32 @@
           "systemMessage": "Você é um assistente de investimentos sênior certificado pela ANBIMA (CEA/CFP). Comunicação sempre impecável em português do Brasil, acolhedora, objetiva e focada na proteção e valorização do patrimônio do cliente."
         }
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000006",
+      "id": "883d1c78-51ff-4e2e-8e75-509c39ee126f",
       "name": "AI Agent - Consultor de Investimentos",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        1120,
-        280
+        16,
+        -160
       ]
     },
     {
       "parameters": {
-        "modelName": "models/gemini-1.5-flash",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000007",
+      "id": "fc995914-e1d6-4c59-b907-d975cab139a1",
       "name": "Google Gemini Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        1120,
-        480
+        16,
+        48
       ],
       "credentials": {
         "googlePalmApi": {
-          "id": "gemini-api-key",
-          "name": "Google Gemini API"
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
         }
       }
     },
@@ -112,13 +112,13 @@
       "parameters": {
         "jsCode": "// Nó Híbrido: Captura a resposta da IA ou gera template estático robusto (Fallback MVP)\nconst dadosCruzados = $('Code - Cruzar Perfil e Investimentos').item.json;\nlet mensagemFinal = '';\n\n// Verifica se o agente de IA gerou conteúdo\ntry {\n  const aiOutput = $input.first()?.json?.output || $input.first()?.json?.text;\n  if (aiOutput && typeof aiOutput === 'string' && aiOutput.trim().length > 20) {\n    mensagemFinal = aiOutput.trim();\n  }\n} catch (e) {\n  // Continua para fallback\n}\n\n// Template dinâmico caso a IA não tenha executado (Modo MVP)\nif (!mensagemFinal) {\n  const primeiroNome = dadosCruzados.cliente_nome.split(' ')[0];\n  const perfil = dadosCruzados.cliente_perfil;\n  \n  if (perfil === 'Conservador') {\n    mensagemFinal = `Olá, ${primeiroNome}! Identificamos que seu perfil de investidor é Conservador com saldo disponível de ${dadosCruzados.cliente_saldo}. Para proteger seu patrimônio com máxima segurança e liquidez, recomendamos alocações em ${dadosCruzados.produtos_resumo}. Conte com a DIO Investimentos para planejar seu futuro!`;\n  } else if (perfil === 'Moderado') {\n    mensagemFinal = `Olá, ${primeiroNome}! Com base no seu perfil Moderado e saldo de ${dadosCruzados.cliente_saldo}, selecionamos alternativas que equilibram rentabilidade e previsibilidade: ${dadosCruzados.produtos_resumo}. Uma excelente estratégia para acelerar seus objetivos!`;\n  } else {\n    mensagemFinal = `Olá, ${primeiroNome}! Seu perfil Arrojado e capital de ${dadosCruzados.cliente_saldo} abrem portas para opções de alto potencial de retorno no mercado. Selecionamos para sua carteira: ${dadosCruzados.produtos_resumo}. Vamos potencializar seus resultados!`;\n  }\n}\n\n// Monta HTML elegante para briefing por e-mail\nconst emailHtml = `\n<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;\">\n  <div style=\"background: #0f172a; color: #ffffff; padding: 24px; text-align: center;\">\n    <h2 style=\"margin: 0; color: #38bdf8;\">DIO Asset Management</h2>\n    <p style=\"margin: 4px 0 0 0; font-size: 14px; opacity: 0.8;\">Assessoria Patrimonial Inteligente</p>\n  </div>\n  <div style=\"padding: 24px; background: #ffffff;\">\n    <p style=\"font-size: 16px; line-height: 1.6; color: #334155;\">${mensagemFinal.replace(/\\n/g, '<br>')}</p>\n    <div style=\"margin: 20px 0; padding: 16px; background: #f8fafc; border-left: 4px solid #38bdf8; border-radius: 4px;\">\n      <strong>Perfil:</strong> ${dadosCruzados.cliente_perfil} | <strong>Saldo:</strong> ${dadosCruzados.cliente_saldo}\n    </div>\n    <p style=\"font-size: 13px; color: #64748b; margin-top: 24px;\">Esta é uma simulação gerada de forma automatizada via RPA + n8n + Inteligência Artificial.</p>\n  </div>\n</div>\n`;\n\nreturn {\n  json: {\n    ...dadosCruzados,\n    mensagem_gerada: mensagemFinal,\n    email_html: emailHtml,\n    status_envio: 'Pronto para disparo'\n  }\n};"
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000008",
+      "id": "ec8b9c00-ad0f-4b82-81b0-7c44c5378560",
       "name": "Briefing Email & Fallback MVP",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1380,
-        300
+        272,
+        -144
       ]
     },
     {
@@ -128,20 +128,15 @@
         "message": "={{ $json.mensagem_gerada }}",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000009",
+      "id": "f1bae9ad-23df-4b1e-b2bc-7f2545086e6c",
       "name": "Gmail - Enviar Briefing",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1600,
-        200
+        496,
+        -240
       ],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "gmail-oauth",
-          "name": "Gmail DIO Account"
-        }
-      },
+      "webhookId": "7d6ceea7-53e9-44db-be8c-ffbe002c9a3b",
       "disabled": true
     },
     {
@@ -150,16 +145,46 @@
         "responseBody": "={\n  \"status\": \"sucesso\",\n  \"total_processado\": {{ $('Briefing Email & Fallback MVP').all().length }},\n  \"clientes_atendidos\": {{ JSON.stringify($('Briefing Email & Fallback MVP').all().map(i => ({\n    nome: i.json.cliente_nome,\n    email: i.json.cliente_email,\n    perfil: i.json.cliente_perfil,\n    saldo: i.json.cliente_saldo,\n    recomendacao: i.json.mensagem_gerada\n  }))) }}\n}",
         "options": {}
       },
-      "id": "e1f1c2d3-1111-4000-8000-000000000010",
+      "id": "bef12941-95bd-4f8c-87ee-7949d140241e",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1600,
-        400
+        496,
+        -48
       ]
     }
   ],
+  "pinData": {
+    "Webhook - Ingest RPA": [
+      {
+        "json": {
+          "body": {
+            "clientes": [
+              {
+                "nome": "Ana Silva",
+                "email": "ana@email.com",
+                "saldo": "R$ 12.500,00",
+                "perfil": "Conservador"
+              },
+              {
+                "nome": "Bruno Lima",
+                "email": "bruno@email.com",
+                "saldo": "R$ 3.200,00",
+                "perfil": "Moderado"
+              },
+              {
+                "nome": "Carla Souza",
+                "email": "carla@email.com",
+                "saldo": "R$ 28.900,00",
+                "perfil": "Arrojado"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
   "connections": {
     "Webhook - Ingest RPA": {
       "main": [
@@ -260,37 +285,17 @@
       ]
     }
   },
+  "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "pinData": {
-    "Webhook - Ingest RPA": [
-      {
-        "json": {
-          "body": {
-            "clientes": [
-              {
-                "nome": "Ana Silva",
-                "email": "ana@email.com",
-                "saldo": "R$ 12.500,00",
-                "perfil": "Conservador"
-              },
-              {
-                "nome": "Bruno Lima",
-                "email": "bruno@email.com",
-                "saldo": "R$ 3.200,00",
-                "perfil": "Moderado"
-              },
-              {
-                "nome": "Carla Souza",
-                "email": "carla@email.com",
-                "saldo": "R$ 28.900,00",
-                "perfil": "Arrojado"
-              }
-            ]
-          }
-        }
-      }
-    ]
-  }
+  "versionId": "647ade5f-693e-46dc-b66e-2bdcfe484ca1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "41ff46083e15e600135ed694e3f4b3c95b43b8536f28a9d89468acf126ddcb5f"
+  },
+  "nodeGroups": [],
+  "id": "Vv9uAcU1nqGqxYRO",
+  "tags": []
 }
